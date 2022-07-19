@@ -92,7 +92,6 @@ class WindowManager {
         }
         
         if frontmostWindowElement.isSheet()
-            || frontmostWindowElement.isSystemDialog()
             || currentWindowRect.isNull
             || usableScreens.frameOfCurrentScreen.isNull
             || usableScreens.visibleFrameOfCurrentScreen.isNull {
@@ -101,7 +100,7 @@ class WindowManager {
             return
         }
         
-        let currentNormalizedRect = AccessibilityElement.normalizeCoordinatesOf(currentWindowRect, frameOfScreen: usableScreens.frameOfCurrentScreen)
+        let currentNormalizedRect = AccessibilityElement.normalizeCoordinatesOf(currentWindowRect)
         let currentWindow = Window(id: windowId, rect: currentNormalizedRect)
         
         let windowCalculation = WindowCalculationFactory.calculationsByAction[action]
@@ -129,11 +128,13 @@ class WindowManager {
             return
         }
         
-        let newRect = AccessibilityElement.normalizeCoordinatesOf(calcResult.rect, frameOfScreen: usableScreens.frameOfCurrentScreen)
+        let newRect = AccessibilityElement.normalizeCoordinatesOf(calcResult.rect)
 
-        let visibleFrameOfDestinationScreen = calcResult.screen.adjustedVisibleFrame
+        let isTodo = Defaults.todoMode.enabled && TodoManager.isTodoWindow(id: windowId)
+        
+        let visibleFrameOfDestinationScreen = isTodo ? calcResult.screen.frame : calcResult.screen.adjustedVisibleFrame
 
-        let useFixedSizeMover = !frontmostWindowElement.isResizable() && action.resizes
+        let useFixedSizeMover = (!frontmostWindowElement.isResizable() && action.resizes) || frontmostWindowElement.isSystemDialog()
         let windowMoverChain = useFixedSizeMover
             ? fixedSizeWindowMoverChain
             : standardWindowMoverChain

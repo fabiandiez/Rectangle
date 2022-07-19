@@ -95,7 +95,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.windowManager = WindowManager()
         self.shortcutManager = ShortcutManager(windowManager: windowManager)
         self.applicationToggle = ApplicationToggle(shortcutManager: shortcutManager)
-        self.snappingManager = SnappingManager()
+        self.snappingManager = SnappingManager(applicationToggle: applicationToggle)
         self.initializeTodo()
         checkForProblematicApps()
     }
@@ -124,7 +124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard !Defaults.windowSnapping.userDisabled, !Defaults.notifiedOfProblemApps.enabled else { return }
         
         let problemBundleIds: [String] = [
-            "com.mathworks.matlab"
+            "com.mathworks.matlab", "com.live2d.cubism.CECubismEditorApp"
         ]
         
         // these apps are java based with dynamic bundleIds
@@ -427,6 +427,8 @@ extension AppDelegate {
         let separator = NSMenuItem.separator()
         separator.tag = TodoItem.separator.tag
         mainStatusMenu.insertItem(separator, at: menuIndex)
+        
+        showHideTodoMenuItems()
     }
     
     private func showHideTodoMenuItems() {

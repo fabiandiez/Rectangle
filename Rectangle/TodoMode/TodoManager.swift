@@ -36,6 +36,10 @@ class TodoManager {
         guard let todoWindow = AccessibilityElement.todoWindow() else { return false }
         return isTodoWindow(w, todoWindow: todoWindow)
     }
+    
+    static func isTodoWindow(id: WindowId) -> Bool {
+        AccessibilityElement.todoWindow()?.getIdentifier() == id
+    }
 
     private static func isTodoWindow(_ w: AccessibilityElement, todoWindow: AccessibilityElement) -> Bool {
         return w.getIdentifier() == todoWindow.getIdentifier()
@@ -48,22 +52,28 @@ class TodoManager {
 
         if let todoWindow = AccessibilityElement.todoWindow() {
             if let screen = TodoManager.todoScreen {
-                let screenFrame = screen.frame as CGRect
                 let sd = ScreenDetection()
                 // Clear all windows from the todo app sidebar
                 for w in windows {
                     let wScreen = sd.detectScreens(using: w)?.currentScreen
                     if w.getIdentifier() != todoWindow.getIdentifier() &&
                         wScreen == TodoManager.todoScreen {
-                        shiftWindowOffSidebar(w, screenFrame: screenFrame)
+                        shiftWindowOffSidebar(w, screenVisibleFrame: screen.adjustedVisibleFrame)
                     }
                 }
 
                 var rect = todoWindow.rectOfElement()
-                rect.origin.x = screenFrame.maxX - CGFloat(Defaults.todoSidebarWidth.value)
-                rect.origin.y = screenFrame.minY
+                rect.origin.x = Defaults.todoMode.enabled && Defaults.todo.userEnabled
+                    ? screen.adjustedVisibleFrame.maxX
+                    : screen.adjustedVisibleFrame.maxX - Defaults.todoSidebarWidth.cgFloat
+                rect.origin.y = screen.adjustedVisibleFrame.minY
                 rect.size.height = screen.adjustedVisibleFrame.height
-                rect.size.width = CGFloat(Defaults.todoSidebarWidth.value)
+                rect.size.width = Defaults.todoSidebarWidth.cgFloat
+                rect = AccessibilityElement.normalizeCoordinatesOf(rect)
+                
+                if Defaults.gapSize.value > 0 {
+                    rect = GapCalculation.applyGaps(rect, sharedEdges: .left, gapSize: Defaults.gapSize.value)
+                }
                 todoWindow.setRectOf(rect)
             }
 
@@ -77,18 +87,19 @@ class TodoManager {
         TodoManager.todoScreen = screens?.currentScreen
     }
     
-    private static func shiftWindowOffSidebar(_ w: AccessibilityElement, screenFrame: CGRect) {
+    private static func shiftWindowOffSidebar(_ w: AccessibilityElement, screenVisibleFrame: CGRect) {
         var rect = w.rectOfElement()
+        let halfGapWidth = CGFloat(Defaults.gapSize.value) / 2
 
-        if (rect.maxX > (screenFrame.maxX - CGFloat(Defaults.todoSidebarWidth.value))) {
+        if (rect.maxX > screenVisibleFrame.maxX - halfGapWidth) {
             // Shift it to the left
-            rect.origin.x = max (0, rect.origin.x - (rect.maxX - (screenFrame.maxX - CGFloat(Defaults.todoSidebarWidth.value))))
-
+            rect.origin.x = min(rect.origin.x, max(screenVisibleFrame.minX, (rect.origin.x - (rect.maxX - screenVisibleFrame.maxX)))) + halfGapWidth
+            
             // If it's still too wide, scale it down
-            if (rect.origin.x == 0) {
-                rect.size.width = min(rect.size.width, screenFrame.maxX - CGFloat(Defaults.todoSidebarWidth.value))
+            if(rect.maxX > screenVisibleFrame.maxX){
+                rect.size.width = rect.size.width - (rect.maxX - screenVisibleFrame.maxX) - halfGapWidth
             }
-
+            
             w.setRectOf(rect)
         }
     }

@@ -38,7 +38,7 @@ class ScreenDetection {
         var largestPercentageOfRectWithinFrameOfScreen: CGFloat = 0.0
         for currentScreen in screens {
             let currentFrameOfScreen = NSRectToCGRect(currentScreen.frame)
-            let normalizedRect: CGRect = AccessibilityElement.normalizeCoordinatesOf(rect, frameOfScreen: currentFrameOfScreen)
+            let normalizedRect: CGRect = AccessibilityElement.normalizeCoordinatesOf(rect)
             if currentFrameOfScreen.contains(normalizedRect) {
                 result = currentScreen
                 break
@@ -129,25 +129,27 @@ struct AdjacentScreens {
 extension NSScreen {
     var adjustedVisibleFrame: CGRect {
         get {
-            let topGap = CGFloat(Defaults.screenEdgeGapTop.value)
-            let bottomGap = CGFloat(Defaults.screenEdgeGapBottom.value)
-            let leftGap = CGFloat(Defaults.screenEdgeGapLeft.value)
-            var rightGap = CGFloat(Defaults.screenEdgeGapRight.value)
+            var newFrame = visibleFrame
+            
+            if StageUtil.stageVisible() {
+                newFrame.origin.x += Defaults.stageSize.cgFloat
+                newFrame.size.width -= Defaults.stageSize.cgFloat
+            }
 
             if Defaults.todo.userEnabled, Defaults.todoMode.enabled, TodoManager.todoScreen == self {
-                rightGap += CGFloat(Defaults.todoSidebarWidth.value)
+                newFrame.size.width -= Defaults.todoSidebarWidth.cgFloat
             }
             
-            let origin = CGPoint(
-                x: visibleFrame.origin.x + leftGap,
-                y: visibleFrame.origin.y + bottomGap
-            )
-            let size = CGSize(
-                width: visibleFrame.width - leftGap - rightGap,
-                height: visibleFrame.height - topGap - bottomGap
-            )
+            if Defaults.screenEdgeGapsOnMainScreenOnly.enabled, self != NSScreen.screens.first {
+                return newFrame
+            }
             
-            return CGRect(origin: origin, size: size)
+            newFrame.origin.x += Defaults.screenEdgeGapLeft.cgFloat
+            newFrame.origin.y += Defaults.screenEdgeGapBottom.cgFloat
+            newFrame.size.width -= (Defaults.screenEdgeGapLeft.cgFloat + Defaults.screenEdgeGapRight.cgFloat)
+            newFrame.size.height -= (Defaults.screenEdgeGapTop.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
+                        
+            return newFrame
         }
     }
 }

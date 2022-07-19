@@ -28,6 +28,9 @@ class SettingsViewController: NSViewController {
     @IBOutlet weak var todoCheckbox: NSButton!
     @IBOutlet weak var todoAppWidthField: AutoSaveFloatField!
     @IBOutlet weak var reflowTodoShortcutView: MASShortcutView!
+    @IBOutlet weak var stageView: NSStackView!
+    @IBOutlet weak var stageSlider: NSSlider!
+    @IBOutlet weak var stageLabel: NSTextField!
     
     private var aboutTodoWindowController: NSWindowController?
     
@@ -108,14 +111,26 @@ class SettingsViewController: NSViewController {
         aboutTodoWindowController?.showWindow(self)
     }
     
+    @IBAction func stageSliderChanged(_ sender: NSSlider) {
+        stageLabel.stringValue = "\(sender.intValue) px"
+        if let event = NSApp.currentEvent {
+            if event.type == .leftMouseUp || event.type == .keyDown {
+                if Float(sender.intValue) != Defaults.stageSize.value {
+                    Defaults.stageSize.value = Float(sender.intValue)
+                }
+            }
+        }
+    }
+    
     @IBAction func restoreDefaults(_ sender: Any) {
-        WindowAction.active.forEach { UserDefaults.standard.removeObject(forKey: $0.name) }
         let currentDefaults = Defaults.alternateDefaultShortcuts.enabled ? "Rectangle" : "Spectacle"
         let defaultShortcutsTitle = NSLocalizedString("Default Shortcuts", tableName: "Main", value: "", comment: "")
         let currentlyUsingText = NSLocalizedString("Currently using: ", tableName: "Main", value: "", comment: "")
         let cancelText = NSLocalizedString("Cancel", tableName: "Main", value: "", comment: "")
         let response = AlertUtil.threeButtonAlert(question: defaultShortcutsTitle, text: currentlyUsingText + currentDefaults, buttonOneText: "Rectangle", buttonTwoText: "Spectacle", buttonThreeText: cancelText)
         if response == .alertThirdButtonReturn { return }
+
+        WindowAction.active.forEach { UserDefaults.standard.removeObject(forKey: $0.name) }
         let rectangleDefaults = response == .alertFirstButtonReturn
         if rectangleDefaults != Defaults.alternateDefaultShortcuts.enabled {
             Defaults.alternateDefaultShortcuts.enabled = rectangleDefaults
@@ -203,6 +218,15 @@ class SettingsViewController: NSViewController {
         unsnapRestoreButton.state = Defaults.unsnapRestore.userDisabled ? .off : .on
         
         cursorAcrossCheckbox.state = Defaults.moveCursorAcrossDisplays.userEnabled ? .on : .off
+        
+        stageSlider.intValue = Int32(Defaults.stageSize.value)
+        stageLabel.stringValue = "\(stageSlider.intValue) px"
+        stageSlider.isContinuous = true
+
+        if #available(macOS 13.0, *) {
+        } else {
+            stageView.isHidden = true
+        }
     }
 
 }

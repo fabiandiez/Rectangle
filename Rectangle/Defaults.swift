@@ -38,6 +38,7 @@ class Defaults {
     static let screenEdgeGapBottom = FloatDefault(key: "screenEdgeGapBottom", defaultValue: 0)
     static let screenEdgeGapLeft = FloatDefault(key: "screenEdgeGapLeft", defaultValue: 0)
     static let screenEdgeGapRight = FloatDefault(key: "screenEdgeGapRight", defaultValue: 0)
+    static let screenEdgeGapsOnMainScreenOnly = BoolDefault(key: "screenEdgeGapsOnMainScreenOnly")
     static let lastVersion = StringDefault(key: "lastVersion")
     static let showAllActionsInMenu = OptionalBoolDefault(key: "showAllActionsInMenu")
     static var SUHasLaunchedBefore: Bool { UserDefaults.standard.bool(forKey: "SUHasLaunchedBefore") }
@@ -61,6 +62,13 @@ class Defaults {
     static let moveCursorAcrossDisplays = OptionalBoolDefault(key: "moveCursorAcrossDisplays")
     static let moveCursor = OptionalBoolDefault(key: "moveCursor")
     static let autoMaximize = OptionalBoolDefault(key: "autoMaximize")
+    static let applyGapsToMaximize = OptionalBoolDefault(key: "applyGapsToMaximize")
+    static let applyGapsToMaximizeHeight = OptionalBoolDefault(key: "applyGapsToMaximizeHeight")
+    static let cornerSnapAreaSize = FloatDefault(key: "cornerSnapAreaSize", defaultValue: 20)
+    static let shortEdgeSnapAreaSize = FloatDefault(key: "shortEdgeSnapAreaSize", defaultValue: 145)
+    static let cascadeAllDeltaSize = FloatDefault(key: "cascadeAllDeltaSize", defaultValue: 30)
+    static let sixthsSnapArea = OptionalBoolDefault(key: "sixthsSnapArea")
+    static let stageSize = FloatDefault(key: "stageSize", defaultValue: 190)
 
     static var array: [Default] = [
         launchOnLogin,
@@ -92,6 +100,7 @@ class Defaults {
         screenEdgeGapBottom,
         screenEdgeGapLeft,
         screenEdgeGapRight,
+        screenEdgeGapsOnMainScreenOnly,
         showAllActionsInMenu,
         footprintAlpha,
         footprintBorderWidth,
@@ -110,7 +119,16 @@ class Defaults {
         notifiedOfProblemApps,
         specifiedHeight,
         specifiedWidth,
-        moveCursorAcrossDisplays
+        moveCursorAcrossDisplays,
+        moveCursor,
+        autoMaximize,
+        applyGapsToMaximize,
+        applyGapsToMaximizeHeight,
+        cornerSnapAreaSize,
+        shortEdgeSnapAreaSize,
+        cascadeAllDeltaSize,
+        sixthsSnapArea,
+        stageSize
     ]
 }
 
@@ -252,6 +270,8 @@ class FloatDefault: Default {
         }
     }
     
+    var cgFloat: CGFloat { CGFloat(value) }
+
     init(key: String, defaultValue: Float = 0) {
         self.key = key
         value = UserDefaults.standard.float(forKey: key)
